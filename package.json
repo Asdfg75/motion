@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "rm -r dist & parcel index.html"
+  },
   "dependencies": {
     "parcel": "^2.0.0-beta.2"
   }
