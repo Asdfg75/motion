@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Motion Capture</title>
+  </head>
+  <body>
+    <video id="video" autoplay></video>
+    <script>
+      var constraints = {
+        audio: false,
+        video: { width: 640, height: 480 },
+      };
+      navigator.mediaDevices.getUserMedia(constraints).then(success).catch(error);
+
+      function success(stream) {
+        var video = document.getElementById('video');
+        video.srcObject = stream;
+      }
+
+      function error(error) {
+        console.log(error);
+      }
+
+      var video = document.getElementById('video');
+
+      var canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+
+      var context = canvas.getContext('2d');
+
+      // document.body.appendChild(canvas);
+
+      var target = document.createElement('canvas');
+      target.width = canvas.width;
+      target.height = canvas.height;
+      var targetCtx = target.getContext('2d');
+
+      document.body.appendChild(target);
+
+      var ready = false;
+      setTimeout(() => {
+        ready = true;
+      }, 2000);
+
+      var interval = setInterval(capture, 100);
+
+      context.globalCompositeOperation = 'difference';
+
+      const PIXEL_SCORE_THRESHOLD = 100;
+      const IMAGE_SCORE_THRESHOLD = 1;
+
+      var n = 0;
+
+      var data = [];
+
+      function capture() {
+        if (!ready) return;
+
+        var { width, height } = canvas;
+
+        var frame = n % 2;
+
+        if (frame == 0) {
+          context.clearRect(0, 0, width, height);
+        }
+
+        context.drawImage(video, 0, 0, width, height);
+        data[frame] = context.getImageData(0, 0, width, height);
+
+        if (frame == 1) {
+          var imageData = data[frame];
+          var imageScore = 0;
+          var maxPixel = 0;
+
+          for (var i = 0; i < imageData.data.length; i += 4) {
+            var r = imageData.data[i + 0];
+            var g = imageData.data[i + 1];
+            var b = imageData.data[i + 2];
+
+            var pixelScore = ((r + g + b) / 3) | 0;
+
+            maxPixel = Math.max(pixelScore, maxPixel);
+
+            if (pixelScore >= PIXEL_SCORE_THRESHOLD) {
+              imageScore += 1;
+
+              data[0].data[i + 0] = Math.min(r * 2, 255);
+              data[0].data[i + 1] = Math.min(g * 2, 255);
+              data[0].data[i + 2] = Math.min(b * 2, 255);
+            }
+          }
+
+          if (imageScore >= IMAGE_SCORE_THRESHOLD) {
+            console.log('Motion: ', imageScore, maxPixel);
+
+            // for (var i = 0; i < imageData.data.length; i += 4) {
+            //   var r = data[1].data[i + 0];
+            //   var g = data[1].data[i + 1];
+            //   var b = data[1].data[i + 2];
+
+            //   data[1].data[i + 0] = Math.min(r * 2, 255);
+            //   data[1].data[i + 1] = Math.min(g * 2, 255);
+            //   data[1].data[i + 2] = Math.min(b * 2, 255);
+            // }
+
+            targetCtx.putImageData(data[0], 0, 0);
+          } else {
+            console.log('None: ', imageScore, maxPixel);
+          }
+        }
+
+        n += 1;
+      }
+    </script>
+  </body>
+</html>
