@@ -1,5 +1,5 @@
 var scale = 0.5;
-var enableSave = true;
+var enableSave = false;
 var frameTotalX = 5;
 var frameTotalY = 5;
 var frameTotal = frameTotalX * frameTotalY;
@@ -75,23 +75,111 @@ function resetFrames() {
   targetContext.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
 }
 
+var resetButton = document.getElementById('reset') as HTMLButtonElement;
+resetButton.addEventListener('click', () => {
+  resetFrames();
+});
+
 var clearButton = document.getElementById('clear') as HTMLButtonElement;
 clearButton.addEventListener('click', () => {
-  maskContext.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-  resetFrames();
+  sampleCanvas.context.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+});
+
+const rgba = (data: Uint8ClampedArray, i) => {
+  return {
+    r: data[i + 0],
+    g: data[i + 1],
+    b: data[i + 2],
+    a: data[i + 3],
+  };
+};
+
+var applyButton = document.getElementById('apply') as HTMLButtonElement;
+applyButton.addEventListener('click', () => {
+  const { canvas, context } = sampleCanvas;
+  const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const { r, g, b, a } = rgba(data, i);
+
+    if (r == 0 && g == 0 && b == 0 && (a == 255 || a == 0)) {
+      data[i + 0] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 255;
+    } else {
+      data[i + 0] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 0;
+    }
+  }
+
+  maskContext.putImageData(new ImageData(data, canvas.width), 0, 0);
 });
 
 function dateStamp() {
   var d = new Date();
-  return `${d.getFullYear()}${d.getMonth()}${d.getDay()}${d.getHours()}${d.getMinutes()}${d.getSeconds()}${d.getMilliseconds()}`
+  return `${d.getFullYear()}${d.getMonth()}${d.getDay()}${d.getHours()}${d.getMinutes()}${d.getSeconds()}${d.getMilliseconds()}`;
 }
 
+var captureInput = document.getElementById('capture') as HTMLInputElement;
+captureInput.addEventListener('change', () => {
+  const { checked } = captureInput;
+  captureVideo = checked;
+});
+captureInput.checked = captureVideo;
+
+var recordInput = document.getElementById('record') as HTMLInputElement;
+recordInput.addEventListener('change', () => {
+  const { checked } = recordInput;
+  enableSave = checked;
+});
+recordInput.checked = enableSave;
+
 var sampleButton = document.getElementById('sample') as HTMLButtonElement;
-var sampleCanvas = getOrCreateCanvas('sample-canvas', constraints.video.width, constraints.video.height);
+var sampleCanvas = getOrCreateCanvas(
+  'sample-canvas',
+  (constraints.video.width * scale) | 0,
+  (constraints.video.height * scale) | 0
+);
 sampleButton.addEventListener('click', () => {
-  sampleCanvas.context.drawImage(video, 0, 0);
-  var url = sampleCanvas.canvas.toDataURL('image/png');
+  const { context, canvas } = sampleCanvas;
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+});
+
+var saveButton = document.getElementById('save') as HTMLButtonElement;
+saveButton.addEventListener('click', () => {
+  const { canvas } = sampleCanvas;
+  var url = canvas.toDataURL('image/png');
   download(`sample-${dateStamp()}.png`, url);
+});
+
+let mouseDown = false;
+sampleCanvas.canvas.addEventListener('mousedown', (event) => {
+  mouseDown = true;
+});
+
+sampleCanvas.canvas.addEventListener('mouseup', (event) => {
+  mouseDown = false;
+});
+
+sampleCanvas.canvas.addEventListener('mousemove', (event) => {
+  if (mouseDown) {
+    const { clientX, clientY } = event;
+    const { context, canvas } = sampleCanvas;
+    const { offsetLeft, offsetTop } = canvas;
+
+    const x = clientX - offsetLeft;
+    const y = clientY - offsetTop;
+
+    const radius = 20;
+
+    context.beginPath();
+    context.ellipse(x, y, radius, radius, 0, 0, Math.PI * 2);
+    context.fillStyle = '#000f';
+    context.fill();
+  }
 });
 
 var input = document.getElementById('upload') as HTMLInputElement;
@@ -104,22 +192,11 @@ input.addEventListener('change', () => {
     var reader = new FileReader();
     var img = new Image();
 
+    const { context } = sampleCanvas;
+
     img.onload = () => {
-      maskContext.clearRect(0, 0, compositeCanvas.width, compositeCanvas.height);
-      maskContext.drawImage(img, 0, 0, compositeCanvas.width, compositeCanvas.height);
-
-      var maskData = maskContext.getImageData(0, 0, compositeCanvas.width, compositeCanvas.height).data;
-
-      maskContext.clearRect(0, 0, compositeCanvas.width, compositeCanvas.height);
-      for (let i = 0; i < maskData.length; i += 4) {
-        maskData[i + 0] = 0;
-        maskData[i + 1] = 0;
-        maskData[i + 2] = 0;
-      }
-
-      maskContext.putImageData(new ImageData(maskData, compositeCanvas.width), 0, 0);
-
-      resetFrames();
+      context.clearRect(0, 0, compositeCanvas.width, compositeCanvas.height);
+      context.drawImage(img, 0, 0, compositeCanvas.width, compositeCanvas.height);
     };
 
     reader.readAsDataURL(file);

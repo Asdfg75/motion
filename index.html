@@ -17,16 +17,21 @@
       <video id="video" autoplay></video>
     </div>
     <div>
-      <button id="clear">CLEAR</button>
+      capture: <input id="capture" type="checkbox" />
+      save: <input id="record" type="checkbox" />
+      <button id="reset">RESET</button>
       <button id="sample">SAMPLE</button>
+      <button id="clear">CLEAR</button>
+      <button id="apply">APPLY</button>
+      <button id="save">SAVE</button>
       <input id="upload" type="file" accept="image/png, image/jpeg" />
     </div>
     <div>
       <canvas id='mask'></canvas>
+      <canvas id='sample-canvas'></canvas>
     </div>
     <div>
       <!-- <canvas id='composite'></canvas> -->
-      <!-- <canvas id='sample-canvas'></canvas> -->
     </div>
     <div>
       <canvas id='target'></canvas>
