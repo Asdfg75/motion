@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Motion Capture</title>
+  </head>
+  <style>body {
+      background-color: gray;
+    }
+</style>
+  <body>
+    <div id="version"></div>
+    <div id="info"></div>
+    <div>
+      <video id="video" autoplay=""></video>
+    </div>
+    <div>
+      capture: <input id="capture" type="checkbox">
+      save: <input id="record" type="checkbox">
+      <button id="reset">RESET</button>
+      <button id="sample">SAMPLE</button>
+      <button id="clear">CLEAR</button>
+      <button id="apply">APPLY</button>
+      <button id="save">SAVE</button>
+      <input id="upload" type="file" accept="image/png, image/jpeg">
+    </div>
+    <div>
+      <canvas id="mask"></canvas>
+      <canvas id="sample-canvas"></canvas>
+    </div>
+    <div>
+      <!-- <canvas id='composite'></canvas> -->
+    </div>
+    <div>
+      <canvas id="target"></canvas>
+    </div>
+    <script src="/motion/index.f9285138.js"></script>
+  </body>
+</html>
