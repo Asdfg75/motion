@@ -1,32 +1,35 @@
-var scale = 0.5;
-var enableSave = false;
-var frameTotalX = 5;
-var frameTotalY = 5;
-var frameTotal = frameTotalX * frameTotalY;
-var frameRate = 10;
-var captureVideo = true; // captuere video or difference image
+const compositeScale = 0.25;
+const targetScale = 0.25;
+const frameTotalX = 25;
+const frameTotalY = 1;
+const frameTotal = frameTotalX * frameTotalY;
+const frameRate = 10;
+const videoWidth = 800;
+const videoHeight = 400;
 
 const PIXEL_SCORE_THRESHOLD = 85;
 const IMAGE_SCORE_THRESHOLD = 1;
 
-var version = document.getElementById('version') as HTMLDivElement;
+const version = document.getElementById('version') as HTMLDivElement;
 version.innerHTML = Date.now().toString();
 
-var info = document.getElementById('info') as HTMLDivElement;
+const info = document.getElementById('info') as HTMLDivElement;
 
-var checkComposite = false;
-var frameIndex = 0;
-var weightedMaxPixel = 0;
-var weightedMaxImage = 0;
+let captureVideo = true; // captuere video or difference image
+let enableSave = false;
+let checkComposite = false;
+let frameIndex = 0;
+let weightedMaxPixel = 0;
+let weightedMaxImage = 0;
 
-var constraints = {
+const constraints = {
   audio: false,
-  video: { width: 640, height: 480 },
+  video: { width: videoWidth, height: videoHeight },
 };
 navigator.mediaDevices.getUserMedia(constraints).then(success).catch(error);
 
 function getOrCreateCanvas(id, width, height, append = false) {
-  var canvas = document.getElementById(id) as HTMLCanvasElement;
+  let canvas = document.getElementById(id) as HTMLCanvasElement;
 
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -39,7 +42,7 @@ function getOrCreateCanvas(id, width, height, append = false) {
   canvas.width = width;
   canvas.height = height;
 
-  var context = canvas.getContext('2d');
+  const context = canvas.getContext('2d');
 
   return {
     canvas,
@@ -47,7 +50,7 @@ function getOrCreateCanvas(id, width, height, append = false) {
   };
 }
 
-var video = document.getElementById('video') as HTMLVideoElement;
+const video = document.getElementById('video') as HTMLVideoElement;
 
 function success(stream) {
   video.srcObject = stream;
@@ -75,12 +78,12 @@ function resetFrames() {
   targetContext.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
 }
 
-var resetButton = document.getElementById('reset') as HTMLButtonElement;
+const resetButton = document.getElementById('reset') as HTMLButtonElement;
 resetButton.addEventListener('click', () => {
   resetFrames();
 });
 
-var clearButton = document.getElementById('clear') as HTMLButtonElement;
+const clearButton = document.getElementById('clear') as HTMLButtonElement;
 clearButton.addEventListener('click', () => {
   sampleCanvas.context.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
 });
@@ -94,7 +97,7 @@ const rgba = (data: Uint8ClampedArray, i) => {
   };
 };
 
-var applyButton = document.getElementById('apply') as HTMLButtonElement;
+const applyButton = document.getElementById('apply') as HTMLButtonElement;
 applyButton.addEventListener('click', () => {
   const { canvas, context } = sampleCanvas;
   const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -119,39 +122,39 @@ applyButton.addEventListener('click', () => {
 });
 
 function dateStamp() {
-  var d = new Date();
+  const d = new Date();
   return `${d.getFullYear()}${d.getMonth()}${d.getDay()}${d.getHours()}${d.getMinutes()}${d.getSeconds()}${d.getMilliseconds()}`;
 }
 
-var captureInput = document.getElementById('capture') as HTMLInputElement;
+const captureInput = document.getElementById('capture') as HTMLInputElement;
 captureInput.addEventListener('change', () => {
   const { checked } = captureInput;
   captureVideo = checked;
 });
 captureInput.checked = captureVideo;
 
-var recordInput = document.getElementById('record') as HTMLInputElement;
+const recordInput = document.getElementById('record') as HTMLInputElement;
 recordInput.addEventListener('change', () => {
   const { checked } = recordInput;
   enableSave = checked;
 });
 recordInput.checked = enableSave;
 
-var sampleButton = document.getElementById('sample') as HTMLButtonElement;
-var sampleCanvas = getOrCreateCanvas(
+const sampleButton = document.getElementById('sample') as HTMLButtonElement;
+const sampleCanvas = getOrCreateCanvas(
   'sample-canvas',
-  (constraints.video.width * scale) | 0,
-  (constraints.video.height * scale) | 0
+  (videoWidth * compositeScale) | 0,
+  (videoHeight * compositeScale) | 0
 );
 sampleButton.addEventListener('click', () => {
   const { context, canvas } = sampleCanvas;
   context.drawImage(video, 0, 0, canvas.width, canvas.height);
 });
 
-var saveButton = document.getElementById('save') as HTMLButtonElement;
+const saveButton = document.getElementById('save') as HTMLButtonElement;
 saveButton.addEventListener('click', () => {
   const { canvas } = sampleCanvas;
-  var url = canvas.toDataURL('image/png');
+  const url = canvas.toDataURL('image/png');
   download(`sample-${dateStamp()}.png`, url);
 });
 
@@ -182,15 +185,15 @@ sampleCanvas.canvas.addEventListener('mousemove', (event) => {
   }
 });
 
-var input = document.getElementById('upload') as HTMLInputElement;
+const input = document.getElementById('upload') as HTMLInputElement;
 input.addEventListener('change', () => {
-  var files = input.files;
+  const files = input.files;
 
   if (files) {
-    var file = files[0];
+    const file = files[0];
 
-    var reader = new FileReader();
-    var img = new Image();
+    const reader = new FileReader();
+    const img = new Image();
 
     const { context } = sampleCanvas;
 
@@ -208,13 +211,13 @@ input.addEventListener('change', () => {
   }
 });
 
-var { canvas: compositeCanvas, context: compositeContext } = getOrCreateCanvas(
+const { canvas: compositeCanvas, context: compositeContext } = getOrCreateCanvas(
   'composite',
-  (constraints.video.width * scale) | 0,
-  (constraints.video.height * scale) | 0
+  (videoWidth * compositeScale) | 0,
+  (videoHeight * compositeScale) | 0
 );
 
-var { canvas: maskCanvas, context: maskContext } = getOrCreateCanvas(
+const { canvas: maskCanvas, context: maskContext } = getOrCreateCanvas(
   'mask',
   compositeCanvas.width,
   compositeCanvas.height
@@ -223,13 +226,13 @@ var { canvas: maskCanvas, context: maskContext } = getOrCreateCanvas(
 // maskContext.fillStyle = '#000';
 maskContext.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
 
-var { canvas: targetCanvas, context: targetContext } = getOrCreateCanvas(
+const { canvas: targetCanvas, context: targetContext } = getOrCreateCanvas(
   'target',
-  compositeCanvas.width * frameTotalX,
-  compositeCanvas.height * frameTotalY
+  videoWidth * targetScale * frameTotalX,
+  videoHeight * targetScale * frameTotalY
 );
 
-var ready = false;
+let ready = false;
 setTimeout(() => {
   ready = true;
 }, 2000);
@@ -239,31 +242,32 @@ setInterval(capture, 1000 / frameRate);
 function capture() {
   if (!ready) return;
 
-  var { width, height } = compositeCanvas;
+  const width = (targetCanvas.width / frameTotalX) | 0;
+  const height = (targetCanvas.height / frameTotalY) | 0;
 
   if (!checkComposite) {
     compositeContext.fillStyle = '#000';
-    compositeContext.fillRect(0, 0, width, height);
+    compositeContext.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
   }
 
   compositeContext.globalCompositeOperation = 'difference';
-  compositeContext.drawImage(video, 0, 0, width, height);
+  compositeContext.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height);
 
   compositeContext.globalCompositeOperation = 'source-over';
-  compositeContext.drawImage(maskCanvas, 0, 0, width, height);
+  compositeContext.drawImage(maskCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
 
   if (checkComposite) {
-    var imageScore = 0;
-    var maxPixel = 0;
+    let imageScore = 0;
+    let maxPixel = 0;
 
-    var imageData = compositeContext.getImageData(0, 0, width, height).data;
+    const imageData = compositeContext.getImageData(0, 0, compositeCanvas.width, compositeCanvas.height).data;
 
-    for (var i = 0; i < imageData.length; i += 4) {
-      var r = imageData[i + 0];
-      var g = imageData[i + 1];
-      var b = imageData[i + 2];
+    for (let i = 0; i < imageData.length; i += 4) {
+      const r = imageData[i + 0];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
 
-      var pixelScore = ((r + g + b) / 3) | 0;
+      const pixelScore = ((r + g + b) / 3) | 0;
 
       maxPixel = Math.max(pixelScore, maxPixel);
 
@@ -283,9 +287,14 @@ function capture() {
     if (imageScore >= IMAGE_SCORE_THRESHOLD) {
       console.log('Motion: ', imageScore, maxPixel);
 
-      var x = frameIndex % frameTotalX | 0;
-      var y = (frameIndex / frameTotalX) | 0;
-      var d = new Date();
+      if (frameIndex >= frameTotal) {
+        frameIndex = 0;
+        targetContext.clearRect(0,0, targetCanvas.width, targetCanvas.height);
+      }
+
+      const x = frameIndex % frameTotalX | 0;
+      const y = (frameIndex / frameTotalX) | 0;
+      const d = new Date();
 
       targetContext.clearRect(x * width, y * height, width, height);
 
@@ -303,11 +312,11 @@ function capture() {
       targetContext.fillText(imageScore.toFixed(0), x * width + 10, y * height + 40);
 
       if (enableSave && frameIndex == frameTotal - 1) {
-        var url = targetCanvas.toDataURL('image/png');
+        const url = targetCanvas.toDataURL('image/png');
         download(`clips-${dateStamp()}.png`, url);
       }
 
-      frameIndex = (frameIndex + 1) % frameTotal;
+      frameIndex += 1;
     } else {
       console.log('None: ', imageScore, maxPixel);
     }
